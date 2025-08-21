@@ -1,0 +1,35 @@
+name: Build Sudoku Game
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install g++
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            choco install mingw -y
+            echo "C:/ProgramData/chocolatey/bin" >> $GITHUB_PATH
+          fi
+
+      - name: Build project
+        run: |
+          g++ *.cpp -o sudoku
+
+      - name: Upload executable to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: sudoku${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+          asset_name: sudoku-${{ matrix.os }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+          tag: ${{ github.ref }}
